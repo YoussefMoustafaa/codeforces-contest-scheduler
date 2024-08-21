@@ -79,6 +79,8 @@ To automate the script, set up a scheduled task:
 3. Set up a trigger to run the batch file daily or at your preferred frequency.
 4. Add an action to start the batch file.
 
+or you can follow this guide to [schedule python script to run daily](https://www.geeksforgeeks.org/schedule-a-python-script-to-run-daily/).
+
 ## Contributing
 
 Contributions are welcome! If you'd like to contribute to the project, please fork the repository and submit a pull request with your changes.
