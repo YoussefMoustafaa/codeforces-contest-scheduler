@@ -25,6 +25,7 @@ def convert_to_time(str):
     dt = datetime.strptime(str, input_format)
     end_time = dt + timedelta(hours=2)
 
+    global iso_format
     iso_format = "%Y-%m-%dT%H:%M:%S"
 
     start_time = dt.strftime(iso_format)
@@ -88,29 +89,53 @@ try:
     service = build('calendar', 'v3', credentials=creds)
 
     for contest in contests_list:
-        event = {
-            'summary': contest.title,
-            'location': '',
-            'description': '',
-            'start': {
-                'dateTime': contest.start_time,
-                'timeZone': 'Africa/Cairo',
-            },
-            'end': {
-                'dateTime': contest.end_time,
-                'timeZone': 'Africa/Cairo',
-            },
-            'reminders': {
-                'useDefault': False,
-                'overrides': [
-                    {'method': 'popup', 'minutes': 24 * 60},
-                    {'method': 'popup', 'minutes': 30},
-                ],
-            },
-        }
 
-        event = service.events().insert(calendarId='primary', body=event).execute()
-        print(f'Event created: {event.get("htmlLink")}')
+        # the problem here is that when searching for events with the 'Z' time zone, it adds +3 hours for the time zone
+        # and it skips the contest time, so we decrease the time for search by 3 hours to get the exact time
+        start_utc = datetime.strptime(contest.start_time, iso_format)
+        start_utc = start_utc - timedelta(hours=3)
+        start_utc = start_utc.strftime(iso_format)
+
+        event_result = (service.events().list(calendarId='primary',
+                                              timeMin=start_utc + 'Z',
+                                              maxResults=1,
+                                              singleEvents=True,
+                                              orderBy='startTime').execute())
+        
+        events = event_result.get('items', [])
+
+        event_exists = False
+
+        for event in events:
+            if event['summary'] == contest.title and event['start'].get('dateTime', '').split('+')[0] == contest.start_time:
+                event_exists = True
+                print(f'Event {contest.title} - {contest.start_time} already exists.')
+                break
+
+        if not event_exists:
+            event = {
+                'summary': contest.title,
+                'location': '',
+                'description': '',
+                'start': {
+                    'dateTime': contest.start_time,
+                    'timeZone': 'Africa/Cairo',
+                },
+                'end': {
+                    'dateTime': contest.end_time,
+                    'timeZone': 'Africa/Cairo',
+                },
+                'reminders': {
+                    'useDefault': False,
+                    'overrides': [
+                        {'method': 'popup', 'minutes': 24 * 60},
+                        {'method': 'popup', 'minutes': 30},
+                    ],
+                },
+            }
+
+            event = service.events().insert(calendarId='primary', body=event).execute()
+            print(f'Event created: {event.get("htmlLink")}')
 
 except HttpError as error:
     print(f'An error occurred: {error}')
