@@ -10,8 +10,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 
-service = Service(executable_path='chromedriver.exe')
-driver = webdriver.Chrome(service=service)
+driver = webdriver.Chrome()
 driver.get('https://codeforces.com/contests')
 
 
@@ -21,6 +20,8 @@ driver.implicitly_wait(5)
 def convert_to_time(str):
 
     input_format = "%b/%d/%Y %H:%M"
+
+    str = str.replace('UTC+2', '')
 
     dt = datetime.strptime(str, input_format)
     end_time = dt + timedelta(hours=2)
