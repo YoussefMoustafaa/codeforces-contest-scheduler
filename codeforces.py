@@ -99,7 +99,7 @@ try:
 
         event_result = (service.events().list(calendarId='primary',
                                               timeMin=start_utc + 'Z',
-                                              maxResults=1,
+                                              timeMax=(datetime.strptime(contest.end_time, iso_format) + timedelta(hours=3)).strftime(iso_format) + 'Z',
                                               singleEvents=True,
                                               orderBy='startTime').execute())
         
@@ -107,6 +107,7 @@ try:
 
         event_exists = False
 
+        print("Events: ", len(events))
         for event in events:
             if event['summary'] == contest.title and event['start'].get('dateTime', '').split('+')[0] == contest.start_time:
                 event_exists = True
